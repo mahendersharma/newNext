@@ -1,6 +1,4 @@
-import { Box, Heading, Text,Stack } from "@chakra-ui/react";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { Box, Heading, Text, Stack, Image } from "@chakra-ui/react";
 
 interface Person {
   name: string;
@@ -21,45 +19,9 @@ interface Person {
   edited: string;
 }
 
-const PersonDetails = () => {
-  const router = useRouter();
-  const { id } = router.query;
-
-  console.log("Router Query:", router.query);
-  console.log("Person ID in [id].tsx:", id);
-
-  const [person, setPerson] = useState<Person | null>(null);
-
-  useEffect(() => {
-    const fetchPerson = async () => {
-      if (id && typeof id === "string") {
-        try {
-          const response = await fetch(`https://swapi.dev/api/people/${id}/`);
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-          const data: Person = await response.json();
-          setPerson(data);
-        } catch (error) {
-          console.error("Error fetching person details:", error);
-        }
-      }
-    };
-
-    fetchPerson();
-  }, [id]);
-
-  if (!person) {
-    return (
-      <Box textAlign="center" mt="50px">
-        <Heading>Loading...</Heading>
-      </Box>
-    );
-  }
-
+const PersonCard = ({ person }: { person: Person }) => {
   return (
-    <Box p={5} display="flex" justifyContent="center">
-      <Box
+    <Box
       maxW="sm"
       borderWidth="1px"
       borderRadius="lg"
@@ -150,8 +112,7 @@ const PersonDetails = () => {
         </Text>
       </Stack>
     </Box>
-    </Box>
   );
 };
 
-export default PersonDetails;
+export default PersonCard;
