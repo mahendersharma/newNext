@@ -1,3 +1,4 @@
+// pages/index.tsx
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -10,23 +11,14 @@ import {
   Tr,
   Spinner,
   IconButton,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  useDisclosure,
   Button,
-  HStack,
   Tooltip,
 } from "@chakra-ui/react";
 import { AiFillEye, AiFillHeart, AiOutlineHeart } from "react-icons/ai";
-import { FaFilm } from 'react-icons/fa'; 
-import { GiLion } from 'react-icons/gi';
-import { GiSpaceship } from 'react-icons/gi';
-import { FaCar } from 'react-icons/fa'; 
-import Link from 'next/link';
+import Link from "next/link";
+import Pagination from "../pages/components/Pagination";
+import PersonDetailsModal from "../pages/components/PersonDetailsModal";
+import { useDisclosure } from "@chakra-ui/react";
 
 interface Person {
   name: string;
@@ -34,17 +26,17 @@ interface Person {
   mass: string;
   hair_color: string;
   eye_color: string;
-  created:string;
-  url:string;
-  films:string;
-  homeworld:string;
-  skin_color:string;
-  vehicles:string;
-  birth_year:string;
-  gender:string;
-  species:string;
-  edited:string;
-  starships:string;
+  created: string;
+  url: string;
+  films: string[];
+  homeworld: string;
+  skin_color: string;
+  vehicles: string[];
+  birth_year: string;
+  gender: string;
+  species: string[];
+  edited: string;
+  starships: string[];
 }
 
 const ITEMS_PER_PAGE = 10; // Number of items to display per page
@@ -56,15 +48,18 @@ export default function Home() {
   const [expandedPerson, setExpandedPerson] = useState<string | null>(null);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [favorites, setFavorites] = useState<Person[]>([]);
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const [totalPages, setTotalPages] = useState(0);
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   useEffect(() => {
     fetchPeople();
   }, [page]);
 
   useEffect(() => {
-    const storedFavorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    const storedFavorites = JSON.parse(
+      localStorage.getItem("favorites") || "[]"
+    );
     setFavorites(storedFavorites);
   }, []);
 
@@ -96,7 +91,8 @@ export default function Home() {
     }
   };
 
-  const isFavorite = (name: string) => favorites.some((fav) => fav.name === name);
+  const isFavorite = (name: string) =>
+    favorites.some((fav) => fav.name === name);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -150,7 +146,11 @@ export default function Home() {
                         <AiOutlineHeart />
                       )
                     }
-                    aria-label={isFavorite(person.name) ? "Remove from Favorites" : "Add to Favorites"}
+                    aria-label={
+                      isFavorite(person.name)
+                        ? "Remove from Favorites"
+                        : "Add to Favorites"
+                    }
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent triggering the expand
                       toggleFavorite(person);
@@ -169,13 +169,16 @@ export default function Home() {
                     />
                   </Tooltip>
 
-                  <Link href={`/PersonDetails/${encodeURIComponent(person.url.split('/')[5])}`} passHref>
+                  <Link
+                    href={`/PersonDetails/${encodeURIComponent(
+                      person.url.split("/")[5]
+                    )}`}
+                    passHref
+                  >
                     <Button as="a" colorScheme="blue">
                       View Details Page
                     </Button>
                   </Link>
-
-                
                 </Td>
               </Tr>
               {expandedPerson === person.name && (
@@ -190,9 +193,6 @@ export default function Home() {
                           <Th>Skin Color</Th>
                           <Th>Created</Th>
                           <Th>Edited</Th>
-
-                          
-
                         </Tr>
                       </Thead>
                       <Tbody>
@@ -203,7 +203,6 @@ export default function Home() {
                           <Td>{person.skin_color}</Td>
                           <Td>{person.created}</Td>
                           <Td>{person.edited}</Td>
-
                         </Tr>
                       </Tbody>
                     </Table>
@@ -215,89 +214,17 @@ export default function Home() {
         </Tbody>
       </Table>
 
-      {/* Pagination controls */}
-      <HStack mt={4} spacing={2} justify="center">
-        <Button
-          disabled={page === 1}
-          onClick={() => handlePageChange(page - 1)}
-          colorScheme="blue"
-        >
-          Previous
-        </Button>
-        {Array.from(Array(totalPages).keys()).map((pageNumber) => (
-          <Button
-            key={pageNumber + 1}
-            onClick={() => handlePageChange(pageNumber + 1)}
-            colorScheme={pageNumber + 1 === page ? "blue" : "gray"}
-          >
-            {pageNumber + 1}
-          </Button>
-        ))}
-        <Button
-          disabled={people.length < ITEMS_PER_PAGE}
-          onClick={() => handlePageChange(page + 1)}
-          colorScheme="blue"
-        >
-          Next
-        </Button>
-      </HStack>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
 
-      {/* Modal for displaying full person details */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Details for {selectedPerson?.name}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-  <Box>
-    <strong>Species:</strong>
-    {Array.isArray(selectedPerson?.species) ? (
-      <ul>
-        {selectedPerson?.species.map((species: string, index: number) => (
-          <li key={index}>{species}</li>
-        ))}
-      </ul>
-    ) : (
-      <p>{selectedPerson?.species}</p> // Fallback if it's not an array
-    )}
-
-    <strong>Films:</strong>
-    {Array.isArray(selectedPerson?.films) ? (
-      <ul>
-        {selectedPerson?.films.map((film: string, index: number) => (
-          <li key={index}>{film}</li>
-        ))}
-      </ul>
-    ) : (
-      <p>{selectedPerson?.films}</p> // Fallback if it's not an array
-    )}
-
-    <strong>Starships:</strong>
-    {Array.isArray(selectedPerson?.starships) ? (
-      <ul>
-        {selectedPerson?.starships.map((starship: string, index: number) => (
-          <li key={index}>{starship}</li>
-        ))}
-      </ul>
-    ) : (
-      <p>{selectedPerson?.starships}</p> // Fallback if it's not an array
-    )}
-
-    <strong>Vehicles:</strong>
-    {Array.isArray(selectedPerson?.vehicles) ? (
-      <ul>
-        {selectedPerson?.vehicles.map((vehicle: string, index: number) => (
-          <li key={index}>{vehicle}</li>
-        ))}
-      </ul>
-    ) : (
-      <p>{selectedPerson?.vehicles}</p> // Fallback if it's not an array
-    )}
-  </Box>
-</ModalBody>
-
-        </ModalContent>
-      </Modal>
+      <PersonDetailsModal
+        isOpen={isOpen}
+        onClose={onClose}
+        selectedPerson={selectedPerson}
+      />
     </Box>
   );
 }
